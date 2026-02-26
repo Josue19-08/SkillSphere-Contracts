@@ -23,6 +23,22 @@ pub fn initialize_vault(
     Ok(())
 }
 
+pub fn pause(env: &Env) -> Result<(), VaultError> {
+    let admin = storage::get_admin(env).ok_or(VaultError::NotInitialized)?;
+    admin.require_auth();
+    storage::set_paused(env, true);
+    events::contract_paused(env, true);
+    Ok(())
+}
+
+pub fn unpause(env: &Env) -> Result<(), VaultError> {
+    let admin = storage::get_admin(env).ok_or(VaultError::NotInitialized)?;
+    admin.require_auth();
+    storage::set_paused(env, false);
+    events::contract_paused(env, false);
+    Ok(())
+}
+
 pub fn set_my_rate(env: &Env, expert: &Address, rate_per_second: i128) -> Result<(), VaultError> {
     expert.require_auth();
 
@@ -42,6 +58,10 @@ pub fn book_session(
     expert: &Address,
     max_duration: u64,
 ) -> Result<u64, VaultError> {
+    if storage::is_paused(env) {
+        return Err(VaultError::ContractPaused);
+    }
+
     // Require authorization from the user creating the booking
     user.require_auth();
 
@@ -100,6 +120,10 @@ pub fn finalize_session(
     booking_id: u64,
     actual_duration: u64,
 ) -> Result<(), VaultError> {
+    if storage::is_paused(env) {
+        return Err(VaultError::ContractPaused);
+    }
+
     // 1. Require Oracle authorization
     let oracle = storage::get_oracle(env);
     oracle.require_auth();
@@ -150,6 +174,10 @@ pub fn finalize_session(
 const RECLAIM_TIMEOUT: u64 = 86400;
 
 pub fn reclaim_stale_session(env: &Env, user: &Address, booking_id: u64) -> Result<(), VaultError> {
+    if storage::is_paused(env) {
+        return Err(VaultError::ContractPaused);
+    }
+
     // 1. Require user authorization
     user.require_auth();
 
@@ -188,6 +216,10 @@ pub fn reclaim_stale_session(env: &Env, user: &Address, booking_id: u64) -> Resu
 }
 
 pub fn reject_session(env: &Env, expert: &Address, booking_id: u64) -> Result<(), VaultError> {
+    if storage::is_paused(env) {
+        return Err(VaultError::ContractPaused);
+    }
+
     // 1. Require expert authorization
     expert.require_auth();
 

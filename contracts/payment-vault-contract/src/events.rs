@@ -25,6 +25,12 @@ pub fn session_reclaimed(env: &Env, booking_id: u64, amount: i128) {
     env.events().publish(topics, amount);
 }
 
+/// Emitted when the contract is paused or unpaused
+pub fn contract_paused(env: &Env, paused: bool) {
+    let topics = (symbol_short!("paused"),);
+    env.events().publish(topics, paused);
+}
+
 /// Emitted when an expert rejects a pending session
 pub fn session_rejected(env: &Env, booking_id: u64, reason: &str) {
     let topics = (symbol_short!("reject"), booking_id);

@@ -27,6 +27,18 @@ impl PaymentVaultContract {
         contract::initialize_vault(&env, &admin, &token, &oracle)
     }
 
+    /// Pause the contract (Admin-only)
+    /// Halts all state-changing operations in an emergency
+    pub fn pause(env: Env) -> Result<(), VaultError> {
+        contract::pause(&env)
+    }
+
+    /// Unpause the contract (Admin-only)
+    /// Resumes normal contract operations
+    pub fn unpause(env: Env) -> Result<(), VaultError> {
+        contract::unpause(&env)
+    }
+
     /// Set an expert's own rate per second
     pub fn set_my_rate(env: Env, expert: Address, rate_per_second: i128) -> Result<(), VaultError> {
         contract::set_my_rate(&env, &expert, rate_per_second)

@@ -11,6 +11,7 @@ pub enum DataKey {
     BookingCounter,          // Counter for generating unique booking IDs
     UserBookings(Address),   // User Address -> Vec<u64> of booking IDs
     ExpertBookings(Address), // Expert Address -> Vec<u64> of booking IDs
+    IsPaused,                // Circuit breaker flag
     ExpertRate(Address),     // Expert Address -> rate per second (i128)
 }
 
@@ -44,6 +45,18 @@ pub fn set_oracle(env: &Env, oracle: &Address) {
 
 pub fn get_oracle(env: &Env) -> Address {
     env.storage().instance().get(&DataKey::Oracle).unwrap()
+}
+
+// --- Pause (Circuit Breaker) ---
+pub fn set_paused(env: &Env, paused: bool) {
+    env.storage().instance().set(&DataKey::IsPaused, &paused);
+}
+
+pub fn is_paused(env: &Env) -> bool {
+    env.storage()
+        .instance()
+        .get(&DataKey::IsPaused)
+        .unwrap_or(false)
 }
 
 // --- Booking Counter ---
