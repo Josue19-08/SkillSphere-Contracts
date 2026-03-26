@@ -117,6 +117,32 @@ pub fn ban_expert(env: &Env, expert: &Address) -> Result<(), RegistryError> {
     Ok(())
 }
 
+/// Unban an expert by reverting their status to Verified (Admin only)
+pub fn unban_expert(env: &Env, expert: &Address) -> Result<(), RegistryError> {
+    let admin = storage::get_admin(env).ok_or(RegistryError::NotInitialized)?;
+    admin.require_auth();
+
+    let current_status = storage::get_expert_status(env, expert);
+
+    if current_status != ExpertStatus::Banned {
+        return Err(RegistryError::NotBanned);
+    }
+
+    // Preserve existing data_uri when unbanning
+    let existing = storage::get_expert_record(env, expert);
+    storage::set_expert_record(env, expert, ExpertStatus::Verified, existing.data_uri);
+
+    events::emit_status_change(
+        env,
+        expert.clone(),
+        current_status,
+        ExpertStatus::Verified,
+        admin,
+    );
+
+    Ok(())
+}
+
 /// Get the total number of verified experts ever indexed
 pub fn get_total_experts(env: &Env) -> u64 {
     storage::get_total_experts(env)
