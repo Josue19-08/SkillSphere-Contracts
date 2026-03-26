@@ -1,5 +1,4 @@
 #![no_std]
-
 mod contract;
 mod error;
 mod events;
@@ -56,8 +55,8 @@ impl PaymentVaultContract {
         contract::set_my_rate(&env, &expert, rate_per_second)
     }
 
-    /// Book a session with an expert
-    /// User deposits tokens upfront based on rate_per_second * max_duration
+    /// Book a session with an expert.
+    /// User deposits tokens upfront based on rate_per_second * max_duration.
     pub fn book_session(
         env: Env,
         user: Address,
@@ -67,8 +66,8 @@ impl PaymentVaultContract {
         contract::book_session(&env, &user, &expert, max_duration)
     }
 
-    /// Finalize a session (Oracle-only)
-    /// Calculates payments based on actual duration and processes refunds
+    /// Finalize a session (Oracle-only).
+    /// Calculates payments based on actual duration and processes refunds.
     pub fn finalize_session(
         env: Env,
         booking_id: u64,
@@ -77,8 +76,8 @@ impl PaymentVaultContract {
         contract::finalize_session(&env, booking_id, actual_duration)
     }
 
-    /// Reclaim funds from a stale booking (User-only)
-    /// Users can reclaim their deposit if the booking has been pending for more than 24 hours
+    /// Reclaim funds from a stale booking (User-only).
+    /// Users can reclaim their deposit if the booking has been pending for more than 24 hours.
     pub fn reclaim_stale_session(
         env: Env,
         user: Address,
@@ -87,23 +86,40 @@ impl PaymentVaultContract {
         contract::reclaim_stale_session(&env, &user, booking_id)
     }
 
-    /// Reject a pending session (Expert-only)
-    /// Experts can reject a pending booking, instantly refunding the user
+    /// Reject a pending session (Expert-only).
+    /// Experts can reject a pending booking, instantly refunding the user.
     pub fn reject_session(env: Env, expert: Address, booking_id: u64) -> Result<(), VaultError> {
         contract::reject_session(&env, &expert, booking_id)
     }
 
-    /// Get all booking IDs for a specific user
-    pub fn get_user_bookings(env: Env, user: Address) -> Vec<u64> {
-        storage::get_user_bookings(&env, &user)
+    /// Get a paginated list of booking IDs for a specific user.
+    /// `start_index` is 0-based. Returns at most `limit` booking IDs.
+    pub fn get_user_bookings(env: Env, user: Address, start_index: u32, limit: u32) -> Vec<u64> {
+        storage::get_user_bookings_paginated(&env, &user, start_index, limit)
     }
 
-    /// Get all booking IDs for a specific expert
-    pub fn get_expert_bookings(env: Env, expert: Address) -> Vec<u64> {
-        storage::get_expert_bookings(&env, &expert)
+    /// Get the total number of bookings a user has ever made.
+    pub fn get_user_booking_count(env: Env, user: Address) -> u32 {
+        storage::get_user_booking_count(&env, &user)
     }
 
-    /// Get booking details by booking ID (read-only)
+    /// Get a paginated list of booking IDs for a specific expert.
+    /// `start_index` is 0-based. Returns at most `limit` booking IDs.
+    pub fn get_expert_bookings(
+        env: Env,
+        expert: Address,
+        start_index: u32,
+        limit: u32,
+    ) -> Vec<u64> {
+        storage::get_expert_bookings_paginated(&env, &expert, start_index, limit)
+    }
+
+    /// Get the total number of bookings an expert has ever received.
+    pub fn get_expert_booking_count(env: Env, expert: Address) -> u32 {
+        storage::get_expert_booking_count(&env, &expert)
+    }
+
+    /// Get booking details by booking ID (read-only).
     pub fn get_booking(env: Env, booking_id: u64) -> Option<BookingRecord> {
         storage::get_booking(&env, booking_id)
     }
