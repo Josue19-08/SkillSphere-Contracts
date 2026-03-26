@@ -2,13 +2,14 @@ use crate::error::VaultError;
 use crate::events;
 use crate::storage;
 use crate::types::{BookingRecord, BookingStatus};
-use soroban_sdk::{token, Address, Env};
+use soroban_sdk::{token, Address, Env, Symbol};
 
 pub fn initialize_vault(
     env: &Env,
     admin: &Address,
     token: &Address,
     oracle: &Address,
+    registry: &Address,
 ) -> Result<(), VaultError> {
     // 1. Check if already initialized
     if storage::has_admin(env) {
@@ -19,6 +20,7 @@ pub fn initialize_vault(
     storage::set_admin(env, admin);
     storage::set_token(env, token);
     storage::set_oracle(env, oracle);
+    storage::set_registry_address(env, registry);
 
     Ok(())
 }
@@ -64,6 +66,18 @@ pub fn book_session(
 
     // Require authorization from the user creating the booking
     user.require_auth();
+
+    // Verify expert is verified via Identity Registry cross-contract call
+    let registry_address = storage::get_registry_address(env).ok_or(VaultError::NotInitialized)?;
+    let is_verified: bool = env.invoke_contract(
+        &registry_address,
+        &Symbol::new(env, "is_verified"),
+        soroban_sdk::vec![env, expert.to_val()],
+    );
+
+    if !is_verified {
+        return Err(VaultError::ExpertNotVerified);
+    }
 
     // Fetch the expert's rate
     let rate_per_second =

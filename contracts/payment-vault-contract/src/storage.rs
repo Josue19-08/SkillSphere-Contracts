@@ -7,8 +7,12 @@ pub enum DataKey {
     Admin,
     Token,
     Oracle,
-    Booking(u64),   // Booking ID -> BookingRecord
-    BookingCounter, // Counter for generating unique booking IDs
+    RegistryAddress,        
+    Booking(u64),            // Booking ID -> BookingRecord
+    BookingCounter,          // Counter for generating unique booking IDs
+    UserBookings(Address),   // User Address -> Vec<u64> of booking IDs
+    ExpertBookings(Address), // Expert Address -> Vec<u64> of booking IDs
+    IsPaused,                // Circuit breaker flag
     // ── Indexed User Booking List ──────────────────────────────────────────
     // Replaces the old Vec<u64> approach with O(1) per-write composite keys.
     UserBooking(Address, u32), // (user, index) -> booking_id
@@ -16,8 +20,7 @@ pub enum DataKey {
     // ── Indexed Expert Booking List ────────────────────────────────────────
     ExpertBooking(Address, u32), // (expert, index) -> booking_id
     ExpertBookingCount(Address), // expert -> total count (u32)
-    IsPaused,                    // Circuit breaker flag
-    ExpertRate(Address),         // Expert Address -> rate per second (i128)
+    ExpertRate(Address),     // Expert Address -> rate per second (i128)
 }
 
 // --- Admin ---
@@ -50,6 +53,15 @@ pub fn set_oracle(env: &Env, oracle: &Address) {
 
 pub fn get_oracle(env: &Env) -> Address {
     env.storage().instance().get(&DataKey::Oracle).unwrap()
+}
+
+// --- Registry (Identity) ---
+pub fn set_registry_address(env: &Env, registry: &Address) {
+    env.storage().instance().set(&DataKey::RegistryAddress, registry);
+}
+
+pub fn get_registry_address(env: &Env) -> Option<Address> {
+    env.storage().instance().get(&DataKey::RegistryAddress)
 }
 
 // --- Pause (Circuit Breaker) ---

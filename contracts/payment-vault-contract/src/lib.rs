@@ -16,14 +16,15 @@ pub struct PaymentVaultContract;
 
 #[contractimpl]
 impl PaymentVaultContract {
-    /// Initialize the vault with the Admin, the Payment Token, and the Oracle (Backend)
+    /// Initialize the vault with the Admin, the Payment Token, the Oracle (Backend), and the Identity Registry
     pub fn init(
         env: Env,
         admin: Address,
         token: Address,
         oracle: Address,
+        registry: Address,
     ) -> Result<(), VaultError> {
-        contract::initialize_vault(&env, &admin, &token, &oracle)
+        contract::initialize_vault(&env, &admin, &token, &oracle, &registry)
     }
 
     /// Pause the contract (Admin-only)
